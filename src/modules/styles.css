@@ -1,7 +1,7 @@
 @import "~antd/dist/antd.css";
 
 .box {
-  margin: 0 30px 10px 5px;
+  margin: 30px 30px 10px 5px;
 }
 .groupRow {
   margin: 0 20px 0 20px;
@@ -94,4 +94,9 @@ input {
 h1,
 p {
   font-family: Lato;
+}
+
+.button {
+  float: right;
+  top: 60px;
 }

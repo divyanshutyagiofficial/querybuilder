@@ -7,6 +7,7 @@ import {
   CloseOutlined,
 } from "@ant-design/icons";
 import "./styles.css";
+import { Button } from "antd";
 import { data, timers } from "jquery";
 
 const { TabPane } = Tabs;
@@ -55,6 +56,7 @@ export default class QueryBuilder extends Component {
       <div className="queryBuilder">
         <div className="row">
           <Tabs
+            style={(!this.state.logicData.conditions || this.state.logicData.conditions.length < 2) ? {pointerEvents: "none", opacity: 0.4}: {}}
             defaultActiveKey={this.state.logicData.selectedOperator}
             onChange={(e) => this.selectOperator(this.state.logicData, e)}
           >
@@ -94,6 +96,12 @@ export default class QueryBuilder extends Component {
               this.returnConditions(this.state.logicData.conditions)}
           </div>
         </div>
+
+        <div className={"box"}>
+          <Button className={"button"} type="primary" onClick={() => this.saveData()}>
+            Save
+          </Button>
+        </div>
       </div>
     );
   }
@@ -103,7 +111,7 @@ export default class QueryBuilder extends Component {
     condition.operand2 = null;
     condition.operator2 = null;
     condition.operand3 = null;
-    this.setState({...this.state});
+    this.setState({ ...this.state });
   }
 
   handleOperators(condition, operatorKey, e) {
@@ -159,6 +167,133 @@ export default class QueryBuilder extends Component {
     );
   }
 
+  returnQueryTemplate(condition) {
+    const { masterVariables, masterOperators } = this.props;
+    switch (condition.operator1.type) {
+      case "range":
+        return (
+          <span>
+            <span className="box">
+              <input
+                type="text"
+                placeholder={"Enter Lower Limit"}
+                onChange={(e) => {
+                  condition.lowerLimitValue = e.target.value;
+                  this.setState({ ...this.state });
+                }}
+                value={condition.lowerLimitValue}
+              />
+            </span>
+            <span className="box">
+              <b>{"&"}</b>
+            </span>
+            <span className="box">
+              <input
+                type="text"
+                placeholder={"Enter Higher Limit"}
+                onChange={(e) => {
+                  condition.higherLimitValue = e.target.value;
+                  this.setState({ ...this.state });
+                }}
+                value={condition.higherLimitValue}
+              />
+            </span>
+          </span>
+        );
+
+      case "comparator":
+        {
+          /** Operand 3 ************* */
+        }
+        return (
+          this.showOperand3(condition) && (
+            <input
+              type={"text"}
+              placeholder={"Enter Value"}
+              value={condition.operand3 && condition.operand3.value}
+              onChange={(e) => this.handleOperands(condition, "operand3", e)}
+            />
+          )
+        );
+
+      case "binary":
+        return (
+          <span>
+            {/* Operand 2 ----------*/}
+            {this.showOperand2(condition) && (
+              <select
+                class="form-control"
+                id="sel1"
+                onChange={(e) => this.handleOperands(condition, "operand2", e)}
+              >
+                <option
+                  disabled
+                  selected={!condition.operand2 || !condition.operand2.value}
+                  value
+                >
+                  -- Select an option --{" "}
+                </option>
+                {masterVariables.map((_var) => (
+                  <option
+                    _type={_var.type}
+                    selected={
+                      _var.value ===
+                        (condition.operand2 && condition.operand2.value) ||
+                      false
+                    }
+                  >
+                    {_var.value}
+                  </option>
+                ))}
+              </select>
+            )}
+
+            {/* Operator 2 ----------------------------*/}
+            {this.showOperator2(condition) && (
+              <select
+                class="form-control"
+                id="sel1"
+                onChange={(e) =>
+                  this.handleOperators(condition, "operator2", e)
+                }
+              >
+                <option
+                  disabled
+                  selected={!condition.operator2 || !condition.operator2.value}
+                  value
+                >
+                  -- select an operator --{" "}
+                </option>
+                {masterOperators
+                  .filter((op) => op.type === "comparator")
+                  .map((_var) => (
+                    <option
+                      type={_var.type}
+                      selected={
+                        _var.value ===
+                        (condition.operator2 && condition.operator2.value)
+                      }
+                    >
+                      {_var.value}
+                    </option>
+                  ))}
+              </select>
+            )}
+
+            {/** Operand 3 ************* */}
+            {this.showOperand3(condition) && (
+              <input
+                type={"text"}
+                placeholder={"Enter Value"}
+                value={condition.operand3 && condition.operand3.value}
+                onChange={(e) => this.handleOperands(condition, "operand3", e)}
+              />
+            )}
+          </span>
+        );
+    }
+  }
+
   returnConditions(conditions) {
     const { masterVariables, masterOperators } = this.props;
     console.log(masterVariables);
@@ -202,9 +337,9 @@ export default class QueryBuilder extends Component {
                       id="sel1"
                       onChange={(e) => {
                         this.handleOperators(condition, "operator1", e);
-                        this.setState({...this.state}, () => {
-                            this.resetFields(condition);
-                        })
+                        this.setState({ ...this.state }, () => {
+                          this.resetFields(condition);
+                        });
                       }}
                     >
                       <option
@@ -214,7 +349,7 @@ export default class QueryBuilder extends Component {
                         }
                         value
                       >
-                        -- select an option --{" "}
+                        -- select an operator --{" "}
                       </option>
                       {masterOperators.map((_var) => (
                         <option
@@ -231,73 +366,11 @@ export default class QueryBuilder extends Component {
                     </select>
                   )}
 
-                  {/* Operand 2 ----------*/}
-                  {this.showOperand2(condition) && (
-                    <select
-                      class="form-control"
-                      id="sel1"
-                      onChange={(e) =>
-                        this.handleOperands(condition, "operand2", e)
-                      }
-                    >
-                      <option
-                        disabled
-                        selected={
-                          !condition.operand2 || !condition.operand2.value
-                        }
-                        value
-                      >
-                        -- Select Operator --{" "}
-                      </option>
-                      {masterVariables.map((_var) => (
-                        <option
-                          _type={_var.type}
-                          selected={
-                            _var.value ===
-                              (condition.operand2 &&
-                                condition.operand2.value) || false
-                          }
-                        >
-                          {_var.value}
-                        </option>
-                      ))}
-                    </select>
-                  )}
+                  {condition &&
+                    condition.operator1 &&
+                    condition.operator1.value &&
+                    this.returnQueryTemplate(condition)}
 
-                  {/* Operator 2 ----------------------------*/}
-                  {this.showOperator2(condition) && (
-                    <select
-                      class="form-control"
-                      id="sel1"
-                      onChange={(e) =>
-                        this.handleOperators(condition, "operator2", e)
-                      }
-                    >
-                      {masterOperators
-                        .filter((op) => op.type === "comparator")
-                        .map((_var) => (
-                          <option
-                            type={_var.type}
-                            selected={
-                              _var.value ===
-                              (condition.operator2 && condition.operator2.value)
-                            }
-                          >
-                            {_var.value}
-                          </option>
-                        ))}
-                    </select>
-                  )}
-                  {this.showOperand3(condition) && (
-                    <input
-                      type={"text"}
-                      placeholder={"Enter Value"}
-                      value={condition.operand3 && condition.operand3.value}
-                      onChange={(e) =>
-                        this.handleOperands(condition, "operand3", e)
-                      }
-                    />
-                  )}
                   <CloseOutlined
                     className={"closeIconCondition"}
                     style={{ float: "right" }}
@@ -375,7 +448,7 @@ export default class QueryBuilder extends Component {
 
   addCondition(conditions) {
     let lastElement = conditions && conditions[conditions.length - 1];
-    let previousPageId = lastElement && lastElement["id"];
+    let previousPageId = lastElement && lastElement["id"] || 0;
     conditions.push({
       id: previousPageId + 1,
       type: "standalone",
@@ -408,5 +481,9 @@ export default class QueryBuilder extends Component {
 
   selectOperator(group, value) {
     group.selectedOperator = value;
+  }
+
+  saveData() {
+    console.log(this.state);
   }
 }
