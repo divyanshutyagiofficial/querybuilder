@@ -1,0 +1,97 @@
+@import "~antd/dist/antd.css";
+
+.box {
+  margin: 0 30px 10px 5px;
+}
+.groupRow {
+  margin: 0 20px 0 20px;
+}
+.ant-tabs.ant-tabs-top {
+  display: inline-block;
+}
+.groupConditions {
+  padding: 10px 2px;
+  border: 2px dotted #d8d8d8;
+}
+.icon {
+  position: absolute;
+  top: -35px;
+}
+.queryBuilder {
+  padding: 30px;
+  margin: 30px;
+  border: 1px solid #c5d0d2;
+}
+
+.conditionRow {
+  background: #ececec;
+  padding: 18px;
+  margin: 0 20px 0px 20px;
+  min-height: 72px;
+}
+.tabsRow {
+  background: #eaeaea;
+  padding: 0 20px;
+  min-height: 72px;
+}
+span.dottedHorizonalGrid {
+  position: relative;
+  top: 58px;
+  border-top: 2px dotted #c7c9ca;
+  padding: 0 10px;
+}
+
+.ant-tabs {
+  padding: 23px 0 0 0px;
+  line-height: 0;
+}
+.tooltip {
+  position: relative;
+  display: inline-block;
+  border-bottom: 1px dotted black; /* If you want dots under the hoverable text */
+}
+
+.closeIcon {
+  float: right;
+  position: relative;
+  top: 28px;
+}
+
+.closeIconCondition {
+  float: right !important;
+  position: relative;
+  top: 10px;
+}
+
+/* Tooltip text */
+.tooltip .tooltiptext {
+  visibility: hidden;
+  width: 120px;
+  background-color: black;
+  color: #fff;
+  text-align: center;
+  border-radius: 6px;
+  padding: 4px 0;
+  left: 22px;
+  top: -30px;
+  /* Position the tooltip text - see examples below! */
+  position: absolute;
+  z-index: 1;
+}
+
+/* Show the tooltip text when you mouse over the tooltip container */
+.tooltip:hover .tooltiptext {
+  visibility: visible;
+}
+
+select,
+input {
+  padding: 6px;
+  min-width: 140px;
+  margin: 0 40px 0px 0px;
+  border: 1px solid;
+}
+h1,
+p {
+  font-family: Lato;
+}
