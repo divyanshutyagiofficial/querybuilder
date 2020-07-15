@@ -6,6 +6,8 @@ const masterOperators = [
   { value: "=", type: "comparator", application: "number" },
   { value: "-", type: "binary", application: "number" },
   { value: "+", type: "binary", application: "number" },
+  { value: "x", type: "binary", application: "number" },
+  { value: "/", type: "binary", application: "number" },
   { value: ">", type: "comparator", application: "number" },
   { value: ">=", type: "comparator", application: "number" },
   { value: "<", type: "comparator", application: "number" },
