@@ -5,6 +5,8 @@ import {
   ApartmentOutlined,
   GroupOutlined,
   CloseOutlined,
+  PlusOutlined,
+  PlusCircleOutlined,
 } from "@ant-design/icons";
 import "./styles.css";
 import { Button } from "antd";
@@ -28,24 +30,18 @@ export default class QueryBuilder extends Component {
         type: "group",
         selectedOperator: "$or",
         conditions: [
-          //   {
-          //     id: 23,
-          //     type: "standalone",
-          //     operand1: {
-          //       type: "Number",
-          //       value: null,
-          //     },
-          //     operator1: null,
-          //     operand2: null,
-          //     operator2: null,
-          //     operand3: null,
-          //   },
-          //   {
-          //     id: 24,
-          //     type: "group",
-          //     selectedOperator: "$and",
-          //     conditions: [],
-          //   },
+          // {
+          //   id: 23,
+          //   type: "standalone",
+          //   variables: [],
+          //   operators: [],
+          // },
+          // {
+          //   id: 24,
+          //   type: "group",
+          //   selectedOperator: "$and",
+          //   conditions: [],
+          // },
         ],
       },
     };
@@ -56,7 +52,12 @@ export default class QueryBuilder extends Component {
       <div className="queryBuilder">
         <div className="row">
           <Tabs
-            style={(!this.state.logicData.conditions || this.state.logicData.conditions.length < 2) ? {pointerEvents: "none", opacity: 0.4}: {}}
+            style={
+              !this.state.logicData.conditions ||
+              this.state.logicData.conditions.length < 2
+                ? { pointerEvents: "none", opacity: 0.4 }
+                : {}
+            }
             defaultActiveKey={this.state.logicData.selectedOperator}
             onChange={(e) => this.selectOperator(this.state.logicData, e)}
           >
@@ -66,27 +67,29 @@ export default class QueryBuilder extends Component {
               ))}
           </Tabs>
 
-          <span>
-            <span className="box">
-              <span className="tooltip">
-                <ApartmentOutlined
-                  className="icon"
-                  onClick={() =>
-                    this.addCondition(this.state.logicData.conditions)
-                  }
-                />
-                <span class="tooltiptext">Add Condition</span>
-              </span>
+          <span className={"btnGroup"}>
+            <span>
+              <Button
+                type="default"
+                icon={<PlusOutlined />}
+                size={"medium"}
+                onClick={() =>
+                  this.addCondition(this.state.logicData.conditions)
+                }
+              >
+                Add Rule
+              </Button>
             </span>
 
-            <span className="box">
-              <span className="tooltip">
-                <GroupOutlined
-                  className="icon"
-                  onClick={() => this.addGroup(this.state.logicData.conditions)}
-                />
-                <span class="tooltiptext">Add Group</span>
-              </span>
+            <span>
+              <Button
+                type="default"
+                icon={<PlusCircleOutlined />}
+                size="medium"
+                onClick={() => this.addGroup(this.state.logicData.conditions)}
+              >
+                Add Group
+              </Button>
             </span>
           </span>
 
@@ -98,7 +101,11 @@ export default class QueryBuilder extends Component {
         </div>
 
         <div className={"box"}>
-          <Button className={"button"} type="primary" onClick={() => this.saveData()}>
+          <Button
+            className={"button"}
+            type="primary"
+            onClick={() => this.saveData()}
+          >
             Save
           </Button>
         </div>
@@ -106,269 +113,186 @@ export default class QueryBuilder extends Component {
     );
   }
 
-  resetFields(condition) {
-    // condition.operator1 = null;
-    condition.operand2 = null;
-    condition.operator2 = null;
-    condition.operand3 = null;
-    this.setState({ ...this.state });
-  }
-
-  handleOperators(condition, operatorKey, e) {
+  handleOperators(condition, e, i) {
     let selectedOptions = e && e.target && e.target.selectedOptions;
-    condition[operatorKey] = {
-      type: (selectedOptions && selectedOptions[0].getAttribute("_type")) || "",
-      value: e && e.target && e.target.value,
-    };
+
+    condition.fields.forEach((field, _i) => {
+      if (i === _i) {
+        field.type = selectedOptions[0].getAttribute("_type") || "";
+        field.value = e.target.value;
+        field.category = "operator";
+      }
+    });
+
+    condition.fields.forEach((_field, _i) => {
+      if (_i > i) {
+        condition.fields.splice(_i, condition.fields.length);
+      }
+    });
+
+    let field = condition.fields[i];
+    let lastId = condition.fields[condition.fields.length - 1]["id"] || 0;
+    let isNextEntryPresent = condition.fields[i + 1];
+    // if next entry not present.
+    if (!isNextEntryPresent) {
+      if (field && field.type === "binary") {
+        condition.fields.push({
+          id: lastId + 1,
+          category: "variable",
+          value: null,
+          type: null,
+        });
+      } else if (field && field.type === "range") {
+        condition.fields.push({
+          id: lastId + 1,
+          category: "operator",
+          subCategory: "range",
+          value: null,
+          type: "range",
+        });
+      } else {
+        condition.fields.push({
+          id: lastId + 1,
+          category: "input",
+          value: null,
+          type: null,
+        });
+      }
+    }
+
     this.setState({ ...this.state });
+    console.log(this.state);
   }
 
-  handleOperands(condition, operandKey, e) {
+  handleVariables(condition, e, index) {
     let selectedOptions = e.target.selectedOptions;
-    condition[operandKey] = {
-      value: e.target.value,
-      type:
-        (selectedOptions &&
-          selectedOptions[0] &&
-          selectedOptions[0].getAttribute("_type")) ||
-        "",
-    };
+    //updating value for current variable
+    condition.fields.forEach((field, i) => {
+      if (index === i) {
+        field.value = e.target.value;
+        field.dataType =
+          (selectedOptions &&
+            selectedOptions[0] &&
+            selectedOptions[0].getAttribute("_type")) ||
+          "";
+        field.category = "variable";
+      }
+    });
+
+    //pushing object for new operator
+    let lastId = condition.fields[condition.fields.length - 1]["id"] || 0;
+    let isNextEntryPresent = condition.fields[index + 1];
+    // if next entry not present.
+    if (!isNextEntryPresent) {
+      condition.fields.push({
+        id: lastId + 1,
+        category: "operator",
+        value: null,
+        type: null,
+      });
+    }
+
     this.setState({ ...this.state });
   }
 
-  showOperator1(condition) {
-    return (
-      (condition.operator1 && condition.operator1.value) ||
-      condition.operand1.value
-    );
+  handleTextInput(condition, e, i) {
+    condition.fields.forEach((field, _i) => {
+      if (_i === i) {
+        field.value = e.target.value;
+        field.category = "input";
+      }
+    });
   }
 
-  showOperand2(condition) {
-    return (
-      ((condition.operand2 && condition.operand2.value) ||
-        (condition.operator1 && condition.operator1.type === "binary")) &&
-      condition.operator1.type !== "comparator"
-    );
+  handleMinValue(condition, e, i) {
+    condition.fields.forEach((f, _i) => {
+      if (i === _i) {
+        f.minValue = e.target.value;
+      }
+    });
+    this.setState({ ...this.state });
   }
 
-  showOperator2(condition) {
-    return (
-      ((condition.operator2 && condition.operator2.value) ||
-        (condition.operand2 && condition.operand2.value)) &&
-      condition.operator1.type !== "comparator"
-    );
-  }
-
-  showOperand3(condition) {
-    return (
-      (condition.operand3 && condition.operand3.value) ||
-      (condition.operator1 && condition.operator1.type === "comparator") ||
-      (condition.operator2 && condition.operator2.value)
-    );
+  handleMaxValue(condition, e, i) {
+    condition.fields.forEach((f, _i) => {
+      if (i === _i) {
+        f.maxValue = e.target.value;
+      }
+    });
+    this.setState({ ...this.state });
   }
 
   returnQueryTemplate(condition) {
-    const { masterVariables, masterOperators } = this.props;
-    switch (condition.operator1.type) {
-      case "range":
-        return (
+    const { masterFields } = this.props;
+    let firstOperator = condition.fields[0];
+    let fields = condition.fields;
+    return (
+      <span>
+        {fields.map((field, i) => (
           <span>
-            <span className="box">
-              <input
-                type="text"
-                placeholder={"Enter Lower Limit"}
-                onChange={(e) => {
-                  condition.lowerLimitValue = e.target.value;
-                  this.setState({ ...this.state });
-                }}
-                value={condition.lowerLimitValue}
-              />
-            </span>
-            <span className="box">
-              <b>{"&"}</b>
-            </span>
-            <span className="box">
-              <input
-                type="text"
-                placeholder={"Enter Higher Limit"}
-                onChange={(e) => {
-                  condition.higherLimitValue = e.target.value;
-                  this.setState({ ...this.state });
-                }}
-                value={condition.higherLimitValue}
-              />
-            </span>
-          </span>
-        );
-
-      case "comparator":
-        {
-          /** Operand 3 ************* */
-        }
-        return (
-          this.showOperand3(condition) && (
-            <input
-              type={"text"}
-              placeholder={"Enter Value"}
-              value={condition.operand3 && condition.operand3.value}
-              onChange={(e) => this.handleOperands(condition, "operand3", e)}
-            />
-          )
-        );
-
-      case "binary":
-        return (
-          <span>
-            {/* Operand 2 ----------*/}
-            {this.showOperand2(condition) && (
+            {field.category === "input" ? (
+              <span className="box">
+                <input
+                  value={field.value}
+                  type="text"
+                  onChange={(e) => this.handleTextInput(condition, e, i)}
+                />
+              </span>
+            ) : field.category === "operator" &&
+              field.subCategory === "range" ? (
+              <span>
+                <input
+                  value={field.minValue}
+                  type="text"
+                  placeholder={"Enter lower limit"}
+                  onChange={(e) => this.handleMinValue(condition, e, i)}
+                />
+                <input
+                  value={field.maxValue}
+                  type="text"
+                  placeholder={"Enter higher limit"}
+                  onChange={(e) => this.handleMaxValue(condition, e, i)}
+                />
+              </span>
+            ) : (
               <select
-                class="form-control"
-                id="sel1"
-                onChange={(e) => this.handleOperands(condition, "operand2", e)}
-              >
-                <option
-                  disabled
-                  selected={!condition.operand2 || !condition.operand2.value}
-                  value
-                >
-                  -- Select an option --{" "}
-                </option>
-                {masterVariables.map((_var) => (
-                  <option
-                    _type={_var.type}
-                    selected={
-                      _var.value ===
-                        (condition.operand2 && condition.operand2.value) ||
-                      false
-                    }
-                  >
-                    {_var.value}
-                  </option>
-                ))}
-              </select>
-            )}
-
-            {/* Operator 2 ----------------------------*/}
-            {this.showOperator2(condition) && (
-              <select
-                class="form-control"
-                id="sel1"
                 onChange={(e) =>
-                  this.handleOperators(condition, "operator2", e)
+                  field.category === "operator"
+                    ? this.handleOperators(condition, e, i)
+                    : this.handleVariables(condition, e, i)
                 }
               >
-                <option
-                  disabled
-                  selected={!condition.operator2 || !condition.operator2.value}
-                  value
-                >
-                  -- select an operator --{" "}
+                <option disabled selected={!field || !field.value} value>
+                  -- Select an option --{" "}
                 </option>
-                {masterOperators
-                  .filter((op) => op.type === "comparator")
-                  .map((_var) => (
-                    <option
-                      type={_var.type}
-                      selected={
-                        _var.value ===
-                        (condition.operator2 && condition.operator2.value)
-                      }
-                    >
-                      {_var.value}
-                    </option>
+
+                {masterFields
+                  .filter((f) => f.category === field.category)
+                  .map((operator) => (
+                    <option _type={operator.type}>{operator.value}</option>
                   ))}
               </select>
             )}
-
-            {/** Operand 3 ************* */}
-            {this.showOperand3(condition) && (
-              <input
-                type={"text"}
-                placeholder={"Enter Value"}
-                value={condition.operand3 && condition.operand3.value}
-                onChange={(e) => this.handleOperands(condition, "operand3", e)}
-              />
-            )}
           </span>
-        );
-    }
+        ))}
+      </span>
+    );
   }
 
   returnConditions(conditions) {
-    const { masterVariables, masterOperators } = this.props;
-    console.log(masterVariables);
+    const { masterFields } = this.props;
+    console.log(masterFields);
     return (
       <div className={"groupConditions"}>
         {conditions.map((condition, index) => {
           return (
-            <div>
+            <div className="gridRow">
               <span className="dottedHorizonalGrid" />
               {condition.type === "standalone" ? (
                 <div className="conditionRow">
-                  {/* Operand 1 --------------------*/}
-                  {condition.operand1 && (
-                    <select
-                      class="form-control"
-                      id="sel1"
-                      onChange={(e) =>
-                        this.handleOperands(condition, "operand1", e)
-                      }
-                    >
-                      <option
-                        disabled
-                        selected={
-                          !condition.operand1 || !condition.operand1.value
-                        }
-                        value
-                      >
-                        -- select an option --{" "}
-                      </option>
-                      {masterVariables &&
-                        masterVariables.map((_var) => (
-                          <option _type={_var.type}>{_var.value}</option>
-                        ))}
-                    </select>
-                  )}
-
-                  {/* operator 1----------*/}
-                  {this.showOperator1(condition) && (
-                    <select
-                      class="form-control"
-                      id="sel1"
-                      onChange={(e) => {
-                        this.handleOperators(condition, "operator1", e);
-                        this.setState({ ...this.state }, () => {
-                          this.resetFields(condition);
-                        });
-                      }}
-                    >
-                      <option
-                        disabled
-                        selected={
-                          !condition.operator1 || !condition.operator1.value
-                        }
-                        value
-                      >
-                        -- select an operator --{" "}
-                      </option>
-                      {masterOperators.map((_var) => (
-                        <option
-                          _type={_var.type}
-                          selected={
-                            _var.value ===
-                              (condition.operator1 &&
-                                condition.operator1.value) || false
-                          }
-                        >
-                          {_var.value}
-                        </option>
-                      ))}
-                    </select>
-                  )}
-
                   {condition &&
-                    condition.operator1 &&
-                    condition.operator1.value &&
+                    condition.fields &&
+                    condition.fields[0] &&
                     this.returnQueryTemplate(condition)}
 
                   <CloseOutlined
@@ -393,38 +317,45 @@ export default class QueryBuilder extends Component {
                         ))}
                     </Tabs>
 
-                    <span>
-                      <span className="box">
-                        <span className="tooltip">
-                          <ApartmentOutlined
-                            className="icon"
-                            onClick={() =>
-                              this.addCondition(condition.conditions)
-                            }
-                          />
-                          <span class="tooltiptext">Add Condition</span>
-                        </span>
+                    <span className={"btnGroup"}>
+                      <span>
+                        <Button
+                          type="default"
+                          icon={<PlusOutlined />}
+                          size={"medium"}
+                          onClick={() =>
+                            this.addCondition(condition.conditions)
+                          }
+                        >
+                          Add Rule
+                        </Button>
                       </span>
 
-                      <span className="box">
-                        <span className="tooltip">
-                          <GroupOutlined
-                            className="icon"
-                            onClick={() => this.addGroup(condition.conditions)}
-                          />
-                          <span class="tooltiptext">Add Group</span>
-                        </span>
+                      <span>
+                        <Button
+                          type="default"
+                          icon={<PlusCircleOutlined />}
+                          size="medium"
+                          onClick={() => this.addGroup(condition.conditions)}
+                        >
+                          Add Group
+                        </Button>
+                      </span>
+
+                      <span className={"box"}>
+                        <CloseOutlined
+                          className={"closeIcon"}
+                          style={{
+                            position: "relative",
+                            top: "9px",
+                          }}
+                          onClick={() => {
+                            conditions.splice(index, 1);
+                            this.setState({ ...this.state });
+                          }}
+                        />
                       </span>
                     </span>
-
-                    <CloseOutlined
-                      className={"closeIcon"}
-                      style={{ float: "right" }}
-                      onClick={() => {
-                        conditions.splice(index, 1);
-                        this.setState({ ...this.state });
-                      }}
-                    />
                   </div>
                   {condition.conditions &&
                     condition.conditions.length > 0 &&
@@ -434,35 +365,25 @@ export default class QueryBuilder extends Component {
             </div>
           );
         })}
+        <span className="gridWhiteOut"></span>
       </div>
     );
   }
 
-  getComparatorOperators(operators) {
-    return operators.filter((operator) => operator.type === "comparator");
-  }
-
-  getBinaryoperators(operators) {
-    return operators.filter((operator) => operators.type === "binary");
-  }
-
   addCondition(conditions) {
     let lastElement = conditions && conditions[conditions.length - 1];
-    let previousPageId = lastElement && lastElement["id"] || 0;
+    let previousId = (lastElement && lastElement["id"]) || 0;
     conditions.push({
-      id: previousPageId + 1,
+      id: previousId + 1,
       type: "standalone",
-      operand1: {
-        type: "Number",
-        value: null,
-      },
-      operator1: {
-        type: "Number",
-        value: null,
-      },
-      operand2: null,
-      operator2: null,
-      operand3: null,
+      fields: [
+        {
+          id: 1,
+          dataType: "number",
+          category: "variable",
+          value: null,
+        },
+      ],
     });
     this.setState({ ...this.state });
   }
@@ -479,11 +400,12 @@ export default class QueryBuilder extends Component {
     this.setState({ ...this.state });
   }
 
-  selectOperator(group, value) {
-    group.selectedOperator = value;
-  }
+  //   selectOperator(group, value) {
+  //     group.selectedOperator = value;
+  //   }
 
-  saveData() {
-    console.log(this.state);
-  }
+  //   saveData() {
+  //     console.log(this.state);
+  //   }
+  // }
 }

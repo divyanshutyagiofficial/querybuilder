@@ -11,7 +11,7 @@
 }
 .groupConditions {
   padding: 10px 2px;
-  border: 2px dotted #d8d8d8;
+  border-left: 2px solid #d8d8d8;
 }
 .icon {
   position: absolute;
@@ -37,8 +37,19 @@
 span.dottedHorizonalGrid {
   position: relative;
   top: 58px;
-  border-top: 2px dotted #c7c9ca;
-  padding: 0 10px;
+  border-top: 2px solid #c7c9ca;
+  padding: 0 11px;
+  left: -2px;
+}
+
+.gridWhiteOut {
+  padding: 31px 10px;
+  height: 50px;
+  width: 50px;
+  background: white;
+  left: -11px;
+  top: -4px;
+  position: relative;
 }
 
 .ant-tabs {
@@ -77,6 +88,11 @@ span.dottedHorizonalGrid {
   /* Position the tooltip text - see examples below! */
   position: absolute;
   z-index: 1;
+}
+
+.btnGroup {
+  float: right;
+  margin: 20px 0 0 0;
 }
 
 /* Show the tooltip text when you mouse over the tooltip container */
